@@ -174,6 +174,18 @@ const resetState = () => {
   emit('reset')
 }
 
+// 123云盘根目录本身也必须可选中：即使根目录没有子文件夹，也可以直接同步根目录或在根目录新建文件夹。
+const make123RootNode = (children: TreeNodeData[]): TreeNodeData => ({
+  // 用"/"作为根目录的选择值，避免同步表单的required校验把根目录当作未选择
+  id: '/',
+  name: '根目录',
+  path: '/',
+  expanded: true,
+  loading: false,
+  children,
+  hasChildren: true,
+})
+
 const loadRootDirectories = async () => {
   loading.value = true
   try {
@@ -189,21 +201,22 @@ const loadRootDirectories = async () => {
 
     if (response?.data.code === 200) {
       const dirs = (response.data.data || []) as DirInfo[]
-      treeData.value = dirs.map((dir) => ({
+      const mapped = dirs.map((dir) => ({
         ...dir,
         expanded: false,
         loading: false,
         children: [],
         hasChildren: true,
       }))
+      treeData.value = props.sourceType === '123' ? [make123RootNode(mapped)] : mapped
     } else {
       ElMessage.error(response?.data.message || '加载目录失败')
-      treeData.value = []
+      treeData.value = props.sourceType === '123' ? [make123RootNode([])] : []
     }
   } catch {
     console.error('加载目录树错误')
     ElMessage.error('加载目录失败')
-    treeData.value = []
+    treeData.value = props.sourceType === '123' ? [make123RootNode([])] : []
   } finally {
     loading.value = false
   }

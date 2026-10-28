@@ -108,7 +108,7 @@
             :disabled="addForm.scrape_type === 'only_scrape'"
           >
             <el-option label="移动" value="move" />
-            <el-option label="复制" value="copy" />
+            <el-option label="复制" value="copy" :disabled="addForm.source_type === '123'" />
             <el-option label="软链接" value="soft_symlink" />
             <el-option label="硬链接" value="hard_symlink" />
           </el-select>
@@ -323,7 +323,7 @@
             :disabled="editForm.scrape_type === 'only_scrape'"
           >
             <el-option label="移动" value="move" />
-            <el-option label="复制" value="copy" />
+            <el-option label="复制" value="copy" :disabled="editForm.source_type === '123'" />
             <el-option label="软链接" value="soft_symlink" />
             <el-option label="硬链接" value="hard_symlink" />
           </el-select>
