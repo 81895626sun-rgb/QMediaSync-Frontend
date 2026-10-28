@@ -98,6 +98,31 @@
                 </div>
               </div>
 
+              <template v-if="account.source_type === '123'">
+                <div class="info-row">
+                  <div class="info-icon">
+                    <el-icon>
+                      <User />
+                    </el-icon>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">登录账号</span>
+                    <span class="info-value">{{ account.username || '-' }}</span>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <div class="info-icon">
+                    <el-icon>
+                      <Postcard />
+                    </el-icon>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">用户ID</span>
+                    <span class="info-value">{{ account.user_id || '-' }}</span>
+                  </div>
+                </div>
+              </template>
+
               <template v-if="account.source_type === 'openlist'">
                 <div class="info-row">
                   <div class="info-icon">
@@ -137,7 +162,7 @@
 
               <template v-if="
                 (account.source_type === '115' || account.source_type === 'baidupan') &&
-                account.token
+                account.has_token
               ">
                 <div class="status-divider"></div>
                 <div class="disk-status-section">
@@ -234,10 +259,10 @@
 
               <div class="status-row">
                 <div class="status-indicator" :class="getStatusClass(account)">
-                  <el-icon v-if="account.token_failed_reason && !account.token">
+                  <el-icon v-if="account.token_failed_reason && !account.has_token">
                     <CircleClose />
                   </el-icon>
-                  <el-icon v-else-if="account.token">
+                  <el-icon v-else-if="account.has_token">
                     <CircleCheck />
                   </el-icon>
                   <el-icon v-else>
@@ -245,7 +270,7 @@
                   </el-icon>
                   <span>{{ getStatusText(account) }}</span>
                 </div>
-                <el-tooltip v-if="account.token_failed_reason && !account.token" :content="account.token_failed_reason"
+                <el-tooltip v-if="account.token_failed_reason && !account.has_token" :content="account.token_failed_reason"
                   placement="top">
                   <el-icon class="error-help-icon">
                     <QuestionFilled />
@@ -263,7 +288,7 @@
               </el-button>
 
               <el-button type="warning" size="small" plain @click="handleAuthorize(account)"
-                v-if="account.source_type !== 'openlist'">
+                v-if="account.source_type !== 'openlist' && account.source_type !== '123'">
                 <el-icon>
                   <Key />
                 </el-icon>
@@ -272,6 +297,14 @@
 
               <el-button type="primary" size="small" plain @click="handleEdit(account)"
                 v-if="account.source_type === 'openlist'">
+                <el-icon>
+                  <Edit />
+                </el-icon>
+                编辑
+              </el-button>
+
+              <el-button type="primary" size="small" plain @click="handleEdit123(account)"
+                v-if="account.source_type === '123'">
                 <el-icon>
                   <Edit />
                 </el-icon>
@@ -360,6 +393,10 @@
                 <span class="tip-bullet">•</span>
                 <span>OpenList：支持用户名密码或令牌两种认证方式</span>
               </div>
+              <div class="tip-item">
+                <span class="tip-bullet">•</span>
+                <span>123云盘：使用手机号/邮箱加密码登录，创建时即完成认证</span>
+              </div>
             </div>
           </div>
         </div>
@@ -399,6 +436,20 @@
       <el-form-item label="令牌" v-if="newAccountForm.type === 'openlist' && newAccountForm.auth_type === 'token'">
         <el-input type="password" v-model="newAccountForm.token" placeholder="请输入令牌" />
       </el-form-item>
+      <template v-if="newAccountForm.type === '123'">
+        <el-form-item label="账号备注">
+          <el-input v-model="newAccountForm.name" placeholder="请输入账号备注" />
+        </el-form-item>
+        <el-form-item label="手机号/邮箱">
+          <el-input v-model="newAccountForm.username" placeholder="请输入123云盘登录手机号或邮箱" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input type="password" v-model="newAccountForm.password" placeholder="请输入123云盘登录密码" />
+        </el-form-item>
+        <el-form-item label=" ">
+          <div class="form-tip">123云盘使用账号密码直接登录，无需开放平台授权；密码仅保存在本机</div>
+        </el-form-item>
+      </template>
       <el-form-item label="115开放平台应用" v-if="newAccountForm.type === '115'">
         <el-select v-model="newAccountForm.app_id_name" placeholder="请选择APP ID">
           <el-option label="QMediaSync" value="QMediaSync"></el-option>
@@ -409,6 +460,26 @@
       <span class="dialog-footer">
         <el-button @click="showAddAccountDialog = false">取消</el-button>
         <el-button type="primary" @click="handleAddAccount" :loading="addAccountLoading">确定</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="showEdit123Dialog" title="编辑123云盘账号" :width="isMobile ? '90%' : '500px'">
+    <el-form :model="edit123Form" label-width="100px">
+      <el-form-item label="账号备注">
+        <el-input v-model="edit123Form.name" placeholder="请输入账号备注" />
+      </el-form-item>
+      <el-form-item label="手机号/邮箱">
+        <el-input v-model="edit123Form.username" placeholder="请输入123云盘登录手机号或邮箱" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input type="password" v-model="edit123Form.password" placeholder="请输入新密码（留空则不修改）" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="showEdit123Dialog = false">取消</el-button>
+        <el-button type="primary" @click="handleUpdate123Account" :loading="update123Loading">确定</el-button>
       </span>
     </template>
   </el-dialog>
@@ -493,7 +564,7 @@ interface CloudAccount {
   password: string
   base_url: string
   created_at: number
-  token: string
+  has_token: boolean
   auth_type?: string
   app_id_name?: string
   app_id?: string
@@ -535,35 +606,42 @@ const editAccountForm = ref({
 })
 
 const selectedAccountId = ref<number | undefined>(undefined)
-const show123AuthDialog = ref(false)
+const showEdit123Dialog = ref(false)
+const update123Loading = ref(false)
+const edit123Form = ref({
+  id: 0,
+  name: '',
+  username: '',
+  password: '',
+})
 
 const authorizedCount = computed(
-  () => accounts.value.filter((a) => a.token && !a.token_failed_reason).length,
+  () => accounts.value.filter((a) => a.has_token && !a.token_failed_reason).length,
 )
 const unauthorizedCount = computed(
-  () => accounts.value.filter((a) => !a.token && !a.token_failed_reason).length,
+  () => accounts.value.filter((a) => !a.has_token && !a.token_failed_reason).length,
 )
 const failedCount = computed(
-  () => accounts.value.filter((a) => a.token_failed_reason && !a.token).length,
+  () => accounts.value.filter((a) => a.token_failed_reason && !a.has_token).length,
 )
 
 let removeDeviceTypeListener: (() => void) | null = null
 
 const getStatusClass = (account: CloudAccount) => {
-  if (account.token_failed_reason && !account.token) return 'status-failed'
-  if (account.token) return 'status-authorized'
+  if (account.token_failed_reason && !account.has_token) return 'status-failed'
+  if (account.has_token) return 'status-authorized'
   return 'status-unauthorized'
 }
 
 const getStatusText = (account: CloudAccount) => {
-  if (account.token_failed_reason && !account.token) return '授权失败'
-  if (account.token) return '已授权'
+  if (account.token_failed_reason && !account.has_token) return '授权失败'
+  if (account.has_token) return '已授权'
   return '未授权'
 }
 
 const getCardStatusClass = (account: CloudAccount) => {
-  if (account.token_failed_reason && !account.token) return 'is-failed'
-  if (account.token) return 'is-authorized'
+  if (account.token_failed_reason && !account.has_token) return 'is-failed'
+  if (account.has_token) return 'is-authorized'
   return 'is-unauthorized'
 }
 
@@ -581,7 +659,7 @@ const loadAccounts = async () => {
         user_id: item.user_id,
         username: item.username,
         created_at: item.created_at,
-        token: item.token,
+        has_token: item.has_token,
         base_url: item.base_url,
         password: item.password,
         auth_type: item.auth_type,
@@ -594,7 +672,7 @@ const loadAccounts = async () => {
       accounts.value.forEach((account) => {
         if (
           (account.source_type === '115' || account.source_type === 'baidupan') &&
-          account.token
+          account.has_token
         ) {
           loadAccountStatus(account)
         }
@@ -731,11 +809,61 @@ const handleEdit = (account: CloudAccount) => {
     base_url: account.base_url,
     username: account.username,
     password: account.password,
-    token: account.token || '',
+    token: '',
     auth_type: authType,
     token_failed_reason: account.token_failed_reason || '',
   }
   showEditAccountDialog.value = true
+}
+
+const handleEdit123 = (account: CloudAccount) => {
+  edit123Form.value = {
+    id: account.id,
+    name: account.name,
+    username: account.username,
+    password: '',
+  }
+  showEdit123Dialog.value = true
+}
+
+const handleUpdate123Account = async () => {
+  if (!edit123Form.value.username) {
+    ElMessage.error('请输入手机号/邮箱')
+    return
+  }
+  if (!edit123Form.value.password) {
+    ElMessage.error('请输入新密码')
+    return
+  }
+  try {
+    update123Loading.value = true
+    const response = await http?.post(
+      `${SERVER_URL}/account/123`,
+      {
+        id: edit123Form.value.id,
+        name: edit123Form.value.name,
+        username: edit123Form.value.username,
+        password: edit123Form.value.password,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+    if (response?.data.code === 200) {
+      ElMessage.success('123云盘账号更新成功')
+      showEdit123Dialog.value = false
+      loadAccounts()
+    } else {
+      ElMessage.error(response?.data.message || '更新123云盘账号失败')
+    }
+  } catch (error) {
+    console.error('update 123 account error:', error)
+    ElMessage.error('更新123云盘账号失败')
+  } finally {
+    update123Loading.value = false
+  }
 }
 
 const handleUpdateAccount = async () => {
@@ -772,9 +900,6 @@ const handleUpdateAccount = async () => {
 const handleAuthorize = (row: CloudAccount) => {
   if (row.source_type === '115') {
     handle115OAuth(row.id)
-  } else if (row.source_type === '123') {
-    selectedAccountId.value = row.id
-    show123AuthDialog.value = true
   } else if (row.source_type === 'baidupan') {
     handleBaiduOAuth(row.id)
   }
@@ -874,6 +999,12 @@ const handleAddAccount = async () => {
         password: newAccountForm.value.password,
         app_id_name: newAccountForm.value.app_id_name,
         app_id: newAccountForm.value.app_id,
+      })
+    } else if (newAccountForm.value.type === '123') {
+      url = `${SERVER_URL}/account/123`
+      Object.assign(data, {
+        username: newAccountForm.value.username,
+        password: newAccountForm.value.password,
       })
     } else if (newAccountForm.value.type === 'openlist') {
       url = `${SERVER_URL}/account/openlist`

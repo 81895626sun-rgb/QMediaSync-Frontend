@@ -3,10 +3,10 @@ export const sourceTypeOptions: Array<Record<string, string>> = [
     label: '115网盘',
     value: '115',
   },
-  // {
-  //   label: '123云盘',
-  //   value: '123',
-  // },
+  {
+    label: '123云盘',
+    value: '123',
+  },
   {
     label: '百度网盘',
     value: 'baidupan',
@@ -23,7 +23,7 @@ export const sourceTypeOptions: Array<Record<string, string>> = [
 
 export const sourceTypeTagMap: Record<string, string> = {
   '115': 'success',
-  // '123': 'primary',
+  '123': 'primary',
   baidupan: 'danger',
   openlist: 'warning',
   local: 'info',
@@ -31,7 +31,7 @@ export const sourceTypeTagMap: Record<string, string> = {
 
 export const sourceTypeMap: Record<string, string> = {
   '115': '115网盘',
-  // '123': '123云盘',
+  '123': '123云盘',
   baidupan: '百度网盘',
   openlist: 'OpenList',
   local: '本地目录',
