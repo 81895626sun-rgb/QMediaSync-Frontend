@@ -437,14 +437,11 @@
         <el-input type="password" v-model="newAccountForm.token" placeholder="请输入令牌" />
       </el-form-item>
       <template v-if="newAccountForm.type === '123'">
-        <el-form-item label="账号备注">
-          <el-input v-model="newAccountForm.name" placeholder="请输入账号备注" />
-        </el-form-item>
         <el-form-item label="手机号/邮箱">
           <el-input v-model="newAccountForm.username" placeholder="请输入123云盘登录手机号或邮箱" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input type="password" v-model="newAccountForm.password" placeholder="请输入123云盘登录密码" />
+          <el-input type="password" v-model="newAccountForm.password" placeholder="请输入123云盘登录密码" show-password />
         </el-form-item>
         <el-form-item label=" ">
           <div class="form-tip">123云盘使用账号密码直接登录，无需开放平台授权；密码仅保存在本机</div>
@@ -473,7 +470,7 @@
         <el-input v-model="edit123Form.username" placeholder="请输入123云盘登录手机号或邮箱" />
       </el-form-item>
       <el-form-item label="密码">
-        <el-input type="password" v-model="edit123Form.password" placeholder="请输入新密码（留空则不修改）" />
+        <el-input type="password" v-model="edit123Form.password" placeholder="请输入新密码（留空则不修改）" show-password />
       </el-form-item>
     </el-form>
     <template #footer>
